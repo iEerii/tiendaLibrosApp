@@ -38,6 +38,8 @@ public class LibroForm extends JFrame {
                 cargarLibroSeleccionado();
             }
         });
+        modificarButton.addActionListener(e -> modificarLibro());
+        eliminarButton.addActionListener(e -> eliminarLibro());
     }
 
     public void iniciarForma(){
@@ -93,6 +95,48 @@ public class LibroForm extends JFrame {
         }
     }
 
+    private void modificarLibro(){
+        if(this.idTexto.getText().equals("")){
+            mostrarMensaje("Debe seleccionar un registro");
+        } else {
+            //Se verifica que el nombre del libro no sea nulo
+            if(libroTexto.getText().equals("")){
+                mostrarMensaje("Proporciona el nombre del libro...");
+                libroTexto.requestFocusInWindow();
+                return;
+            }
+            //Lenamos el objeto libro a actualizar
+            int idLibro = Integer.parseInt(idTexto.getText());
+            var nombreLibro = libroTexto.getText();
+            var autor = autorTexto.getText();
+            var precio = Double.parseDouble(precioTexto.getText());
+            var existencias = Integer.parseInt(existenciasTexto.getText());
+            var libro =
+                    new Libro(idLibro, nombreLibro, autor, precio, existencias);
+            libroServicio.guardarLibro(libro);
+            mostrarMensaje("Se modifico el libro...");
+            limpiarFormulario();
+            listarLibros();
+        }
+    }
+
+    private void eliminarLibro(){
+        var renglon = tablaLibros.getSelectedRow();
+        if(renglon != -1){
+            String idLibro =
+                    tablaLibros.getModel().getValueAt(renglon, 0).toString();
+            var libro = new Libro();
+            libro.setIdLibro(Integer.parseInt(idLibro));
+            libroServicio.eliminarLibro(libro);
+            mostrarMensaje("Se elimino el libro :" + idLibro);
+            limpiarFormulario();
+            listarLibros();
+        }
+        else {
+            mostrarMensaje("No se ha seleccionado ningun libro para eliminar");
+        }
+    }
+
     private void limpiarFormulario(){
         libroTexto.setText("");
         autorTexto.setText("");
@@ -108,11 +152,19 @@ public class LibroForm extends JFrame {
         //Se crea el elemento idTexto oculto
         idTexto = new JTextField("");
         idTexto.setVisible(false);
-        this.tablaModeloLibros = new DefaultTableModel(0, 5);
+        this.tablaModeloLibros = new DefaultTableModel(0, 5){
+            @Override
+            public boolean isCellEditable(int row, int column){
+                return false;
+            }
+        };
+
         String[] cabeceros = {"Id", "Libro", "Autor", "Precio", "Existencias"};
         this.tablaModeloLibros.setColumnIdentifiers(cabeceros);
         //Intanciar el objeto JTable
         this.tablaLibros = new JTable(tablaModeloLibros);
+        //Evitar seleccionar varios registros
+        tablaLibros.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         listarLibros();
     }
 
